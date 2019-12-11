@@ -6,29 +6,18 @@
 #include <string.h> 
 #define PORT 6654
 
+
 typedef struct box
 {
 	char* name;
-	char* message[1024];
+	char msg[1024][1024];
 	struct box* next;
 }box;
 
 box* list;
 int sockets[256];
 
-void upd(box* curr)
-{
-	struct box* ptr;
-	for(ptr=list;ptr;ptr=ptr->next)
-	{
-		if(!strcmp(ptr->name,curr->name))
-		{
-			ptr->message=curr->message;
-			return;
-		}
-	}
-}
-void add(box* new)
+void add(struct box* new)
 {
 	if(!list)
 	{
@@ -83,47 +72,14 @@ void create(char* name,int newSock)
 	}
 	else
 	{
-		box* new = (box*)malloc(sizeof(box));
+		struct box* new = (box*)malloc(sizeof(box));
 		new->name=name;
+		new->msg;
 		new->next=NULL;
 		add(new);
 		response="Account created!";
 		send(newSock,response,strlen(response),0);
 	}
-}
-
-box* open(char* name,int newSock)
-{
-	char* response;
-		
-	if(name==NULL)
-	{
-		response="ER: NULL NAME";
-		send(newSock,response,strlen(response),0);
-		return NULL;
-	}
-	if(!isalpha(name[0]))
-	{
-		response="ER: You need to start your name with an alphabetical character.";
-		send(newSock,response,strlen(response),0);
-		return NULL;
-	}
-	if(strlen(name)<5||strlen(name)>25)
-	{
-		response="ER: Your name must be between 5-25 characters long.";
-		send(newSock,response,strlen(response),0);
-		return NULL;
-	}
-	box* curr = getBox(name);
-	if(curr==NULL)
-	{
-		response = "ER: DNE";
-		send(newSock,response,strlen(response),0);
-		return NULL;
-	}
-	response="OK!";
-	send(newSock,response,strlen(response),0);
-	return curr;
 }
 void delete(char* name, int newSock)
 {
@@ -194,7 +150,7 @@ int main(int argc, char const *argv[])
 		response="HELLO DUMBv0 ready!";
 		struct box* curr;
 		send(newSock,response,strlen(response),0);
-		int q;
+		int q,i;
 		while(1)
 		{	
 			strncpy(cmd,command,6);
@@ -208,33 +164,63 @@ int main(int argc, char const *argv[])
 			}
 			else if(!strcmp(cmd,"OPNBX "))
 			{
-				curr=open(content,newSock);
-				q=0;
+				if(content==NULL)
+				{
+					response="ER: NULL NAME";
+					send(newSock,response,strlen(response),0);
+					continue;
+				}
+				if(!isalpha(content[0]))
+				{
+					response="ER: You need to start your name with an alphabetical character.";
+					send(newSock,response,strlen(response),0);
+					continue;
+				}
+				if(strlen(content)<5||strlen(content)>25)
+				{
+					response="ER: Your name must be between 5-25 characters long.";
+					send(newSock,response,strlen(response),0);
+					continue;
+				}
+				for(curr=list;curr;curr=curr->next)
+				{
+					if(!strcmp(curr->name,content))
+					break;
+				}
+				if(curr==NULL)
+				{
+					response = "ER: DNE";
+					send(newSock,response,strlen(response),0);
+					continue;
+				}
+				response="OK!";
+				send(newSock,response,strlen(response),0);
+				q=i=0;
 			}
 			else if(!strcmp(cmd,"NXTMG "))
 			{
 				if(!curr)
 				{
-					response="Error: NO BOX OPEN";
+					response="ER: NO BOX OPEN";
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
 				if(q>1024)
 				{
-					response="Error: EXCEDED MSGBOX SIZE";
+					response="ER: EXCEDED MSGBOX SIZE";
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				response=curr->message[q++];
-				printf("YOU ARE X: %s",response);
+				printf("Message: %s, %d\n",curr->msg[q]);
+				response=curr->msg[q];
 				if(response==NULL)
 				{
 					response="ER: NO MSG";
 					send(newSock,response,strlen(response),0);
-					break;
+					continue;
 				}
+				q++;
 				send(newSock,response,strlen(response),0);
-				break;
 			}
 			else if(!strcmp(cmd,"PUTMG "))
 			{
@@ -246,17 +232,15 @@ int main(int argc, char const *argv[])
 				}
 				if(q>1024)
 				{
-					response="Error: EXCEDED MSGBOX SIZE";
+					response="ER: EXCEDED MSGBOX SIZE";
 					send(newSock,response,strlen(response),0);
 					break;
-				}
-				int i;
-				for(i=0;curr->message[i];i++)
-				{}
-				ptr->message[i]=content;
-				response="OK!%c!",content[0];
-				printf("%c, %s",content[0],curr->message[i]);
+				}	
+				response="OK!";
+				strncpy(curr->msg[i],content,1024);
+				i++;
 				send(newSock,response,strlen(response),0);
+					
 			}
 			else if(!strcmp(cmd,"DELBX "))
 			{
@@ -276,7 +260,7 @@ int main(int argc, char const *argv[])
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				put(curr);
+				
 				response="Box %s closed!\n",curr->name;
 				send(newSock,response,strlen(response),0);
 				curr=NULL;

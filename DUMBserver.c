@@ -9,20 +9,26 @@
 typedef struct box
 {
 	char* name;
-	char* message;
+	char* message[1024];
 	struct box* next;
 }box;
 
 box* list;
 int sockets[256];
 
+
 void add(box* new)
 {
-	struct box* ptr;
-	for(ptr=list;ptr!=NULL;ptr=ptr->next)
+	if(!list)
 	{
-		if(ptr->next==NULL)
-		{
+		list=new;
+		return;
+	}	
+	struct box* ptr;
+	for(ptr=list;ptr;ptr=ptr->next)
+	{
+		if(ptr->next==NULL || list==NULL)
+		{	
 			ptr->next = new;
 			return;
 		}
@@ -30,8 +36,8 @@ void add(box* new)
 }
 box* getBox(char* name)
 {
-	box* curr;
-	for(curr=list;curr!=NULL;curr=curr->next)
+	struct box* curr;
+	for(curr=list;curr;curr=curr->next)
 	{
 		if(!strcmp(curr->name,name))
 		return curr;
@@ -41,14 +47,8 @@ box* getBox(char* name)
 
 //Commands
 
-void create(char* name)
+void create(char* name,int newSock)
 {
-	/*
-		rules:
-		1.) 5-25 characters
-		2.) must start with an alphabetic character
-	*/
-
 	char* response;
 	send(newSock,response,strlen(response),0);
 	
@@ -58,7 +58,7 @@ void create(char* name)
 		send(newSock,response,strlen(response),0);
 		return;
 	}
-	if(!isalpha(name[0])
+	if(!isalpha(name[0]))
 	{
 		response="You need to start your name with an alphabetical character.";
 		send(newSock,response,strlen(response),0);
@@ -76,47 +76,70 @@ void create(char* name)
 		new->name=name;
 		new->next=NULL;
 		add(new);
+		response="Account created!";
+		send(newSock,response,strlen(response),0);
 	}
 }
 
-void open(char* name)
+box* open(char* name,int newSock)
 {
 	char* response;
-	send(newSock,response,strlen(response),0);
 		
 	if(name==NULL)
 	{
-		response="You need a name, dude.";
+		response="ER: NULL NAME";
 		send(newSock,response,strlen(response),0);
-		return;
+		return NULL;
 	}
-	if(!isalpha(name[0])
+	if(!isalpha(name[0]))
 	{
-		response="You need to start your name with an alphabetical character.";
+		response="ER: You need to start your name with an alphabetical character.";
 		send(newSock,response,strlen(response),0);
-		return;
+		return NULL;
 	}
 	if(strlen(name)<5||strlen(name)>25)
 	{
-		response="Your name must be between 5-25 characters long.";
+		response="ER: Your name must be between 5-25 characters long.";
 		send(newSock,response,strlen(response),0);
-		return;
+		return NULL;
 	}
-	else
+	box* curr = getBox(name);
+	if(curr==NULL)
 	{
-		box* curr = getBox(name);
-		if(curr==NULL)
+		response = "ER: DNE";
+		send(newSock,response,strlen(response),0);
+		return NULL;
+	}
+	response="OK!";
+	send(newSock,response,strlen(response),0);
+	return curr;
+}
+void delete(char* name, int newSock)
+{
+	char* response;	
+	struct box* ptr;
+	struct box* prev;
+	for(ptr=prev=list;ptr;prev=ptr,ptr=ptr->next)
+	{
+		if(!strcmp(ptr->name,name))
 		{
-			response = "That name doesn't exist";
+			prev->next=ptr->next;
+			response="OK!";
 			send(newSock,response,strlen(response),0);
 			return;
+		}
+		
 	}
+	response = "ER: DNE.";
+	send(newSock,response,strlen(response),0);
 }
+
+
 
 int main(int argc, char const *argv[])
 { 
 	char command[1024];
-	int serverFD,newSock,rval,opt,addrLen,status; 
+	int serverFD,newSock,rval,opt,addrLen,status;
 	opt=1;
         struct sockaddr_in addr; 
 	addrLen=sizeof(addr);
@@ -150,17 +173,6 @@ int main(int argc, char const *argv[])
         	perror("accept"); 
         	exit(EXIT_FAILURE); 
     	}     	
-	/*
-			Commands:
-			HELLO_
-			GDBYE_
-			CREAT_
-			OPNBX_
-			NXTMG_
-			PUTMG_
-			DELBX_
-			CLSBX_
-	*/
 	rval=read(newSock,command,1024);	
 	char cmd[6];
 	char content[1018];
@@ -169,45 +181,116 @@ int main(int argc, char const *argv[])
 	if(!strcmp(command,"HELLO"))
 	{
 		response="HELLO DUMBv0 ready!";
+		struct box* curr;
 		send(newSock,response,strlen(response),0);
+		int q;
 		while(1)
 		{	
-			rval=recv(newSock,command,1024,0);
 			strncpy(cmd,command,6);
 			strncpy(content,command+6,1024);
-			printf("%s\n",cmd);
+			
 			if(!strcmp(command,"GDBYE"))
 			break;
 			else if(!strcmp(cmd,"CREAT "))
 			{
-				
+				create(content,newSock);
 			}
 			else if(!strcmp(cmd,"OPNBX "))
 			{
-				
+				curr=open(content,newSock);
+				q=0;
 			}
 			else if(!strcmp(cmd,"NXTMG "))
 			{
-				
+				if(!curr)
+				{
+					response="Error: NO BOX OPEN";
+					send(newSock,response,strlen(response),0);
+					continue;
+				}
+				if(q>1024)
+				{
+					response="Error: EXCEDED MSGBOX SIZE";
+					send(newSock,response,strlen(response),0);
+					continue;
+				}
+				struct box* ptr;
+				for(ptr=list;ptr;ptr=ptr->next)
+				{
+					if(!strcmp(curr->name,ptr->name))
+					{
+						response=ptr->message[q++];
+						printf("YOU ARE X: %s",response);
+						if(response==NULL)
+						{
+							response="ER: NO MSG";
+							send(newSock,response,strlen(response),0);
+							break;
+						}
+						send(newSock,response,strlen(response),0);
+						break;
+					}
+				}
 			}
 			else if(!strcmp(cmd,"PUTMG "))
 			{
-				
+				if(!curr)
+				{
+					response="ER: NO BOX OPEN";
+					send(newSock,response,strlen(response),0);
+					continue;
+				}
+				struct box* ptr;
+				for(ptr=list;ptr;ptr=ptr->next)
+				{
+					if(q>1024)
+					{
+						response="Error: EXCEDED MSGBOX SIZE";
+						send(newSock,response,strlen(response),0);
+						break;
+					}
+					if(!strcmp(curr->name,ptr->name))
+					{
+						int i;
+						for(i=0;curr->message[i];i++)
+						{}
+						ptr->message[i]=content;
+						response="OK!%c!",content[0];
+						printf("%c, %s",content[0],curr->message[i]);
+						send(newSock,response,strlen(response),0);
+					}
+				}
 			}
 			else if(!strcmp(cmd,"DELBX "))
 			{
-				
+				delete(content,newSock);
 			}
 			else if(!strcmp(cmd,"CLSBX "))
 			{
+				if(!curr)
+				{
+					response="ER: NO BOX OPEN";
+					send(newSock,response,strlen(response),0);
+					continue;
+				}				
+				if(strcmp(content,curr->name))
+				{
+					response="ER: DOES NOT MATCH";
+					send(newSock,response,strlen(response),0);
+					continue;
+				}
 				
+				response="Box %s closed!\n",curr->name;
+				send(newSock,response,strlen(response),0);
+				curr=NULL;
 			}
-
+			printf("%s\n",cmd);
+			rval=recv(newSock,command,1024,0);
 		}
 	}
 	else
 	{
-		response="Error: Incorrect Greetings";
+		response="ER: CANNOT ENTER";
 		send(newSock,response,strlen(response),0);
 	}
     	return 0; 

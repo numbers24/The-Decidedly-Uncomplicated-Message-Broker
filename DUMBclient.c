@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -60,14 +61,15 @@ int main(int argc, char **argv){
 	}
 	printf("WE MADE IT BOIS.\n");
 	printf("Choose a command:\n");
-	printf("quit\n");
-	printf("create <name>\n");
-	printf("delete <name>\n");
-	printf("open <name>\n");
-	printf("close <name>\n");
-	printf("next\n");
-	printf("put <size> <msg>\n");
-	do {
+	printf("     quit\n");
+	printf("     create <name>\n");
+	printf("     delete <name>\n");
+	printf("     open <name>\n");
+	printf("     close <name>\n");
+	printf("     next\n");
+	printf("     put <size> <msg>\n");
+	while (1){
+		memset(buffer, 0, 1024);
 		scanf("%s", buffer);
 		if (strcmp(buffer, "quit") == 0){
 			send(sock, goodbye, sizeof(goodbye), 0);
@@ -75,16 +77,79 @@ int main(int argc, char **argv){
 			printf("Terminating client\n");
 			return 0;
 		}else if (strcmp(buffer, "create") == 0){
-			printf("Okay, what box?\n");
+			printf("Okay, what should the name be?\n");
 			scanf("%s", buffer);
 			char create[512];
 			strcpy(create, "CREAT ");
 			strcat(create, buffer);
 			printf("%s\n", create);
 			send(sock, create, sizeof(create), 0);
-			//recv(sock, buffer, sizeof(buffer), 0);
-			//printf("%s\n", buffer);
+			recv(sock, buffer, sizeof(buffer), 0);
+			printf("%s\n", buffer);
+		}else if (strcmp(buffer, "open") == 0){
+			printf("Okay, what box?\n");
+			scanf("%s", buffer);
+			char create[512];
+			strcpy(create, "OPNBX ");
+			strcat(create, buffer);
+			printf("%s\n", create);
+			send(sock, create, sizeof(create), 0);
+			recv(sock, buffer, sizeof(buffer), 0);
+			printf("%s\n", buffer);
+		}else if (strcmp(buffer, "delete") == 0){
+			printf("Okay, what box?\n");
+			scanf("%s", buffer);
+			char create[512];
+			strcpy(create, "DELBX ");
+			strcat(create, buffer);
+			printf("%s\n", create);
+			send(sock, create, sizeof(create), 0);
+			recv(sock, buffer, sizeof(buffer), 0);
+			printf("%s\n", buffer);
+		}else if (strcmp(buffer, "close") == 0){
+			printf("Okay, what box?\n");
+			scanf("%s", buffer);
+			char create[512];
+			strcpy(create, "CLSBX ");
+			strcat(create, buffer);
+			printf("%s\n", create);
+			send(sock, create, sizeof(create), 0);
+			recv(sock, buffer, sizeof(buffer), 0);
+			printf("%s\n", buffer);
+		}else if (strcmp(buffer, "next") == 0){
+			printf("Okay\n");
+			char create[512];
+			strcpy(create, "NXTMG ");
+			printf("%s\n", create);
+			send(sock, create, sizeof(create), 0);
+			recv(sock, buffer, sizeof(buffer), 0);
+			printf("%s\n", buffer);
+		}else if (strcmp(buffer, "put") == 0){
+			printf("Okay, what is the message\n");
+			scanf("%s", buffer);
+			char create[512];
+			char size[256];
+			sprintf(size, "%d", strlen(buffer));
+			strcpy(create, "PUTMG ");
+			strcat(create, size);
+			strcat(create, " ");
+			strcat(create, buffer);
+			printf("%s\n", create);
+			send(sock, create, sizeof(create), 0);
+			recv(sock, buffer, sizeof(buffer), 0);
+			printf("%s\n", buffer);
+		}else if (strcmp(buffer, "help") == 0){
+			printf("Choose a command:\n");
+			printf("     quit\n");
+			printf("     create <name>\n");
+			printf("     delete <name>\n");
+			printf("     open <name>\n");
+			printf("     close <name>\n");
+			printf("     next\n");
+			printf("     put <size> <msg>\n");
+		}else{
+			printf("Command not valid");
 		}
-	}while (1);
+	}
 	return 0;
 }

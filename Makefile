@@ -9,5 +9,9 @@ serve:
 	gcc -o DUMBserve DUMBserver.c
 
 clean:
-	rm DUMBclient;
-	rm DUMBserve;
+	make clean client;
+	make clean serve;
+clean client:
+	rm DUMBclient
+clean serve:
+	rm DUMBserve

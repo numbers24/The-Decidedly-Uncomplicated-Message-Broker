@@ -276,7 +276,7 @@ int main(int argc, char const *argv[])
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				
+				put(curr);
 				response="Box %s closed!\n",curr->name;
 				send(newSock,response,strlen(response),0);
 				curr=NULL;

@@ -16,7 +16,18 @@ typedef struct box
 box* list;
 int sockets[256];
 
-
+void upd(box* curr)
+{
+	struct box* ptr;
+	for(ptr=list;ptr;ptr=ptr->next)
+	{
+		if(!strcmp(ptr->name,curr->name))
+		{
+			ptr->message=curr->message;
+			return;
+		}
+	}
+}
 void add(box* new)
 {
 	if(!list)
@@ -214,23 +225,16 @@ int main(int argc, char const *argv[])
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				struct box* ptr;
-				for(ptr=list;ptr;ptr=ptr->next)
+				response=curr->message[q++];
+				printf("YOU ARE X: %s",response);
+				if(response==NULL)
 				{
-					if(!strcmp(curr->name,ptr->name))
-					{
-						response=ptr->message[q++];
-						printf("YOU ARE X: %s",response);
-						if(response==NULL)
-						{
-							response="ER: NO MSG";
-							send(newSock,response,strlen(response),0);
-							break;
-						}
-						send(newSock,response,strlen(response),0);
-						break;
-					}
+					response="ER: NO MSG";
+					send(newSock,response,strlen(response),0);
+					break;
 				}
+				send(newSock,response,strlen(response),0);
+				break;
 			}
 			else if(!strcmp(cmd,"PUTMG "))
 			{
@@ -240,26 +244,19 @@ int main(int argc, char const *argv[])
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				struct box* ptr;
-				for(ptr=list;ptr;ptr=ptr->next)
+				if(q>1024)
 				{
-					if(q>1024)
-					{
-						response="Error: EXCEDED MSGBOX SIZE";
-						send(newSock,response,strlen(response),0);
-						break;
-					}
-					if(!strcmp(curr->name,ptr->name))
-					{
-						int i;
-						for(i=0;curr->message[i];i++)
-						{}
-						ptr->message[i]=content;
-						response="OK!%c!",content[0];
-						printf("%c, %s",content[0],curr->message[i]);
-						send(newSock,response,strlen(response),0);
-					}
+					response="Error: EXCEDED MSGBOX SIZE";
+					send(newSock,response,strlen(response),0);
+					break;
 				}
+				int i;
+				for(i=0;curr->message[i];i++)
+				{}
+				ptr->message[i]=content;
+				response="OK!%c!",content[0];
+				printf("%c, %s",content[0],curr->message[i]);
+				send(newSock,response,strlen(response),0);
 			}
 			else if(!strcmp(cmd,"DELBX "))
 			{

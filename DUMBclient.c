@@ -14,6 +14,7 @@ int main(int argc, char **argv){
 		printf("Invalid number of arguments.\n");
 		return 0;
 	}
+	//socket stuff
 	const int port = atoi(argv[2]);
 	struct sockaddr_in server;
 	char buffer[1024] = {0};
@@ -60,6 +61,7 @@ int main(int argc, char **argv){
 	}else{
 		printf("Connected successfully!\n");
 	}
+	//showcases the command options
 	printf("Available commands:\n");
 	printf("  -  quit\n");
 	printf("  -  create <name>\n");
@@ -70,6 +72,9 @@ int main(int argc, char **argv){
 	printf("  -  put <size> <msg>\n");
 	printf("  -  help\n");
 	while (1){
+		//takes in command first, then the arguments
+		//if commmand and arguments go in at the same time, it will see that as all one command
+		//client sends server version of commands over. Easier when all commands are size 5
 		memset(buffer, 0, 1024);
 		fgets(buffer, 1024, stdin);
 		buffer[strcspn(buffer, "\n")] = 0;

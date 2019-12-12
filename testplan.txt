@@ -1,14 +1,18 @@
-Create Aditya
-Create Aditya
-Create Aditya
 
-Open DNE BOX
-Open Aditya
-Close Aditya
-Open Aditya
-Open Aditya
-Close Aditya
+Test 1: We created a box with the same name 3 times to see if it would print error
+Create Aditya
+Create Aditya: Already exists
+Create Aditya: Already exists
 
+Test 2: We opened and closed a box a bunch of times to see if the box would properly open and close.
+Open DNE BOX: DNE
+Open Aditya: Opened
+Close Aditya: Closed
+Open Aditya: Opened
+Open Aditya: Already Opened
+Close Aditya: Closed
+
+Test 3: We created 4 clients, one to create and delete 3 user boxes and 3 clients for each user. We made each use open their own box, put a msg inside, go to next message, then closed the boxes.
 u1:
 Create Aditya
 Create Hali

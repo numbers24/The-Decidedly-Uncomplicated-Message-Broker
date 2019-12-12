@@ -142,7 +142,6 @@ void *threadFunc(void *socket) //holds all the commands for each thread
 		open=0;//if a box is opened
 		while(1)
 		{
-			printf("%s\n",cmd);
 			rval=recv(newSock,command,1024,0);//gets the command from the client
 			if(!strcmp(command,"GDBYE"))
 			{
@@ -223,7 +222,6 @@ void *threadFunc(void *socket) //holds all the commands for each thread
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				printf("Message: '%s'\n",curr->msg[0]);
 				response=curr->msg[0];
 				if(response==NULL)//nothing in msg box
 				{
@@ -236,7 +234,6 @@ void *threadFunc(void *socket) //holds all the commands for each thread
 				char sz[1024];
 				size=strlen(response);
 				sprintf(sz, "OK!%d!",size);
-				printf("%d\n",size);
 				strcat(sz,response);
 				for(q=0;curr->msg[q][0]!='\0';q++){					
 					memset(curr->msg[q], 0, 1024);
@@ -263,16 +260,13 @@ void *threadFunc(void *socket) //holds all the commands for each thread
 				for(i=0;content[i]!='!';i++)//for loop to get the size
 				{
 					size*=10;
-					printf("%c\n",content[i]);
 					size+=content[i]-'0';
 				}
 				//enqueu msg
-				printf("%d, %d\n",size, i);
 				sprintf(sz,"OK!%d",size);
 				strncpy(content,content+(i+1),1024);
-				printf("%s\n",content);
 				for(i=0;curr->msg[i][0]!='\0';i++)
-					printf("%s, %d\n",curr->msg[i],i);
+				{}
 				
 				strncpy(curr->msg[i],content,1024);
 				send(newSock,sz,strlen(sz),0);

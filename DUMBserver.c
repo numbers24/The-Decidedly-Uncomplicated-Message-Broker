@@ -206,10 +206,20 @@ void *threadFunc(void *socket)
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				int q;
+				int q,size;
+				for(size=0;curr->msg[0][size]!='\0';size++)
+				{
+					printf("%c\n",msg[0][size]
+				}
+				if(size)
+				size++;
+				printf("%d\n",size);
 				for(q=0;curr->msg[q]!=NULL;q++)
 				curr->msg[q]=curr->msg[q+1];
 				
+				char sz[10];
+				sprintf(sz, "%!",size);
+				send(newSock,sz,strlen(sz),0);	 
 				send(newSock,response,strlen(response),0);
 			}
 			else if(!strcmp(cmd,"PUTMG "))

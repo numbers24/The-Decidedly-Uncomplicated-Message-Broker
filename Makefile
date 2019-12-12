@@ -6,12 +6,7 @@ client:
 	gcc -o DUMBclient DUMBclient.c
 
 serve:
-	gcc -o DUMBserve DUMBserver.c
+	gcc -o DUMBserve DUMBserver.c -lpthread
 
 clean:
-	make clean client;
-	make clean serve;
-clean client:
-	rm DUMBclient
-clean serve:
-	rm DUMBserve
+	rm DUMBclient DUMBserve

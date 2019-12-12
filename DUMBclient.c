@@ -48,7 +48,7 @@ int main(int argc, char **argv){
 		}
 	}
 	if (test < 0){
-		printf("Couldn't connect, shutting down.\n");
+		printf("Couldn't connect, terminating.\n");
 		return 0;
 	}
 	send(sock, hello, sizeof(hello), 0);
@@ -58,97 +58,119 @@ int main(int argc, char **argv){
 		printf("Wrong message, terminating.\n");
 		close(sock);
 		return 0;
+	}else{
+		printf("Connect successfully!\n");
 	}
-	printf("WE MADE IT BOIS.\n");
-	printf("Choose a command:\n");
-	printf("     quit\n");
-	printf("     create <name>\n");
-	printf("     delete <name>\n");
-	printf("     open <name>\n");
-	printf("     close <name>\n");
-	printf("     next\n");
-	printf("     put <size> <msg>\n");
+	printf("Available commands:\n");
+	printf("  -  quit\n");
+	printf("  -  create <name>\n");
+	printf("  -  delete <name>\n");
+	printf("  -  open <name>\n");
+	printf("  -  close <name>\n");
+	printf("  -  next\n");
+	printf("  -  put <size> <msg>\n");
+	printf("  -  help\n");
 	while (1){
 		memset(buffer, 0, 1024);
-		scanf("%s", buffer);
+		fgets(buffer, 1024, stdin);
+		buffer[strcspn(buffer, "\n")] = 0;
+		printf("%s\n", buffer);
 		if (strcmp(buffer, "quit") == 0){
 			send(sock, goodbye, sizeof(goodbye), 0);
 			close(sock);
 			printf("Terminating client\n");
-			return 0;
+			break;
 		}else if (strcmp(buffer, "create") == 0){
+			memset(buffer, 0, 1024);
 			printf("Okay, what should the name be?\n");
-			scanf("%s", buffer);
+			fgets(buffer, 1024, stdin);
+			buffer[strcspn(buffer, "\n")] = 0;
 			char create[512];
 			strcpy(create, "CREAT ");
 			strcat(create, buffer);
 			printf("%s\n", create);
 			send(sock, create, sizeof(create), 0);
+			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
 			printf("%s\n", buffer);
 		}else if (strcmp(buffer, "open") == 0){
+			memset(buffer, 0, 1024);
 			printf("Okay, what box?\n");
-			scanf("%s", buffer);
-			char create[512];
-			strcpy(create, "OPNBX ");
-			strcat(create, buffer);
-			printf("%s\n", create);
-			send(sock, create, sizeof(create), 0);
+			fgets(buffer, 1024, stdin);
+			buffer[strcspn(buffer, "\n")] = 0;
+			char open[512];
+			strcpy(open, "OPNBX ");
+			strcat(open, buffer);
+			printf("Message sent: %s\n", open);
+			send(sock, open, sizeof(open), 0);
+			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
 			printf("%s\n", buffer);
 		}else if (strcmp(buffer, "delete") == 0){
+			memset(buffer, 0, 1024);
 			printf("Okay, what box?\n");
-			scanf("%s", buffer);
-			char create[512];
-			strcpy(create, "DELBX ");
-			strcat(create, buffer);
-			printf("%s\n", create);
-			send(sock, create, sizeof(create), 0);
+			fgets(buffer, 1024, stdin);
+			buffer[strcspn(buffer, "\n")] = 0;
+			char delete[512];
+			strcpy(delete, "DELBX ");
+			strcat(delete, buffer);
+			printf("%s\n", delete);
+			send(sock, delete, sizeof(delete), 0);
+			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
 			printf("%s\n", buffer);
 		}else if (strcmp(buffer, "close") == 0){
+			memset(buffer, 0, 1024);
 			printf("Okay, what box?\n");
-			scanf("%s", buffer);
-			char create[512];
-			strcpy(create, "CLSBX ");
-			strcat(create, buffer);
-			printf("%s\n", create);
-			send(sock, create, sizeof(create), 0);
+			fgets(buffer, 1024, stdin);
+			buffer[strcspn(buffer, "\n")] = 0;
+			char close[512];
+			strcpy(close, "CLSBX ");
+			strcat(close, buffer);
+			printf("%s\n", close);
+			send(sock, close, sizeof(close), 0);
+			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
 			printf("%s\n", buffer);
 		}else if (strcmp(buffer, "next") == 0){
+			memset(buffer, 0, 1024);
 			printf("Okay\n");
-			char create[512];
-			strcpy(create, "NXTMG ");
-			printf("%s\n", create);
-			send(sock, create, sizeof(create), 0);
+			char next[512];
+			strcpy(next, "NXTMG ");
+			printf("%s\n", next);
+			send(sock, next, sizeof(next), 0);
+			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
 			printf("%s\n", buffer);
 		}else if (strcmp(buffer, "put") == 0){
+			memset(buffer, 0, 1024);
 			printf("Okay, what is the message\n");
-			scanf("%s", buffer);
-			char create[512];
+			fgets(buffer, 1024, stdin);
+			buffer[strcspn(buffer, "\n")] = 0;
+			char put[512];
 			char size[256];
 			sprintf(size, "%d", strlen(buffer));
-			strcpy(create, "PUTMG ");
-			strcat(create, size);
-			strcat(create, " ");
-			strcat(create, buffer);
-			printf("%s\n", create);
-			send(sock, create, sizeof(create), 0);
+			strcpy(put, "PUTMG ");
+			strcat(put, size);
+			strcat(put, " ");
+			strcat(put, buffer);
+			printf("%s\n", put);
+			send(sock, put, sizeof(put), 0);
+			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
 			printf("%s\n", buffer);
 		}else if (strcmp(buffer, "help") == 0){
-			printf("Choose a command:\n");
-			printf("     quit\n");
-			printf("     create <name>\n");
-			printf("     delete <name>\n");
-			printf("     open <name>\n");
-			printf("     close <name>\n");
-			printf("     next\n");
-			printf("     put <size> <msg>\n");
+			printf("Available commands:\n");
+			printf("  -  quit\n");
+			printf("  -  create <name>\n");
+			printf("  -  delete <name>\n");
+			printf("  -  open <name>\n");
+			printf("  -  close <name>\n");
+			printf("  -  next\n");
+			printf("  -  put <size> <msg>\n");
+			printf("  -  help\n");
 		}else{
-			printf("Command not valid");
+			printf("Command not valid\n");
 		}
 	}
 	return 0;

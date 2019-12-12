@@ -59,7 +59,7 @@ int main(int argc, char **argv){
 		close(sock);
 		return 0;
 	}else{
-		printf("Connect successfully!\n");
+		printf("Connected successfully!\n");
 	}
 	printf("Available commands:\n");
 	printf("  -  quit\n");

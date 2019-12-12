@@ -209,13 +209,15 @@ void *threadFunc(void *socket)
 				int q,size;
 				for(size=0;curr->msg[0][size]!='\0';size++)
 				{
-					printf("%c\n",msg[0][size]
+					printf("%c\n",curr->msg[0][size]);
 				}
 				if(size)
 				size++;
 				printf("%d\n",size);
-				for(q=0;curr->msg[q]!=NULL;q++)
-				curr->msg[q]=curr->msg[q+1];
+				for(q=0;curr->msg[q]!=NULL;q++){
+					memset(curr->msg[q], 0, 1024);
+					strncpy(curr->msg[q], curr->msg[q+1], 1024);
+				}
 				
 				char sz[10];
 				sprintf(sz, "%!",size);

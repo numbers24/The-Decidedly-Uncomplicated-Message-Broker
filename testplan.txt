@@ -1,0 +1,44 @@
+Create Aditya
+Create Aditya
+Create Aditya
+
+Open DNE BOX
+Open Aditya
+Close Aditya
+Open Aditya
+Open Aditya
+Close Aditya
+
+u1:
+Create Aditya
+Create Hali
+Create Desmond
+Delete Hali
+Delete Hali: DNE
+Delete Aditya
+Delete Aditya: DNE
+Delete Desmond
+Delete Desmond: DNE
+Close
+Close: Double free or corruption error :/
+
+U2: 
+Open Desmond
+Put 10!it’s scarce
+Next: 10!it’scarce
+Close
+
+U3:
+Open Aditya
+Put 16!what is going on
+Next: Okay!16
+Next: 16!it’scarce
+Close
+
+U4:
+Open Hali
+Put 5!hello
+Next: 5!hello
+Close
+
+Observations: We believe that some clients receive messages back later than expected

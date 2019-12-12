@@ -53,7 +53,6 @@ int main(int argc, char **argv){
 	}
 	send(sock, hello, sizeof(hello), 0);
 	recv(sock, buffer, sizeof(buffer), 0);
-	printf("%s\n", buffer);
 	if (strcmp(buffer, "HELLO DUMBv0 ready!") != 0){
 		printf("Wrong message, terminating.\n");
 		close(sock);
@@ -74,9 +73,8 @@ int main(int argc, char **argv){
 		memset(buffer, 0, 1024);
 		fgets(buffer, 1024, stdin);
 		buffer[strcspn(buffer, "\n")] = 0;
-		printf("%s\n", buffer);
 		if (strcmp(buffer, "quit") == 0){
-			send(sock, goodbye, sizeof(goodbye), 0);
+			send(sock, goodbye, strlen(goodbye), 0);
 			close(sock);
 			printf("Terminating client\n");
 			break;
@@ -92,7 +90,12 @@ int main(int argc, char **argv){
 			send(sock, create, sizeof(create), 0);
 			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
-			printf("%s\n", buffer);
+			if (strcmp(buffer, "ER:EXIST") == 0){
+				printf("Box already exists.\n");
+			}else if (strcmp(buffer, "ER:WHAT?") == 0){
+				printf("Couldn't understand command.\n");
+			}
+			printf("Success!\n");
 		}else if (strcmp(buffer, "open") == 0){
 			memset(buffer, 0, 1024);
 			printf("Okay, what box?\n");
@@ -105,7 +108,14 @@ int main(int argc, char **argv){
 			send(sock, open, sizeof(open), 0);
 			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
-			printf("%s\n", buffer);
+			if (strcmp(buffer, "ER:NEXST") == 0){
+				printf("Box doesn't exist.\n");
+			}else if (strcmp(buffer, "ER:OPEND") == 0){
+				printf("Box already open.\n");
+			}else if (strcmp(buffer, "ER:WHAT?") == 0){
+				printf("Couldn't understand command.\n");
+			}
+			printf("Success!\n");
 		}else if (strcmp(buffer, "delete") == 0){
 			memset(buffer, 0, 1024);
 			printf("Okay, what box?\n");
@@ -118,7 +128,16 @@ int main(int argc, char **argv){
 			send(sock, delete, sizeof(delete), 0);
 			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
-			printf("%s\n", buffer);
+			if (strcmp(buffer, "ER:NEXST") == 0){
+				printf("Box doesn't exist.\n");
+			}else if (strcmp(buffer, "ER:OPEND") == 0){
+				printf("Box still open.\n");
+			}else if (strcmp(buffer, "ER:NOTMT") == 0){
+				printf("Messages still in the box.\n");
+			}else if (strcmp(buffer, "ER:WHAT?") == 0){
+				printf("Couldn't understand command.\n");
+			}
+			printf("Success!\n");
 		}else if (strcmp(buffer, "close") == 0){
 			memset(buffer, 0, 1024);
 			printf("Okay, what box?\n");
@@ -131,7 +150,12 @@ int main(int argc, char **argv){
 			send(sock, close, sizeof(close), 0);
 			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
-			printf("%s\n", buffer);
+			if (strcmp(buffer, "ER:NOOPN") == 0){
+				printf("Box is already closed.\n");
+			}else if (strcmp(buffer, "ER:WHAT?") == 0){
+				printf("Couldn't understand command.\n");
+			}
+			printf("Success!\n");
 		}else if (strcmp(buffer, "next") == 0){
 			memset(buffer, 0, 1024);
 			printf("Okay\n");
@@ -141,6 +165,13 @@ int main(int argc, char **argv){
 			send(sock, next, sizeof(next), 0);
 			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
+			if (strcmp(buffer, "ER:EMPTY") == 0){
+				printf("No more messages.\n");
+			}else if (strcmp(buffer, "ER:NOOPN") == 0){
+				printf("Please open a box first.\n");
+			}else if (strcmp(buffer, "ER:WHAT?") == 0){
+				printf("Couldn't understand command.\n");
+			}
 			printf("%s\n", buffer);
 		}else if (strcmp(buffer, "put") == 0){
 			memset(buffer, 0, 1024);
@@ -150,15 +181,20 @@ int main(int argc, char **argv){
 			char put[512];
 			char size[256];
 			sprintf(size, "%d", strlen(buffer));
-			strcpy(put, "PUTMG ");
+			strcpy(put, "PUTMG!");
 			strcat(put, size);
-			strcat(put, " ");
+			strcat(put, "!");
 			strcat(put, buffer);
 			printf("%s\n", put);
 			send(sock, put, sizeof(put), 0);
 			memset(buffer, 0, 1024);
 			recv(sock, buffer, sizeof(buffer), 0);
-			printf("%s\n", buffer);
+			if (strcmp(buffer, "ER:NOOPN") == 0){
+				printf("Please open a box first.\n");
+			}else if (strcmp(buffer, "ER:WHAT?") == 0){
+				printf("Couldn't understand command.\n");
+			}
+			printf("Success!\n");
 		}else if (strcmp(buffer, "help") == 0){
 			printf("Available commands:\n");
 			printf("  -  quit\n");

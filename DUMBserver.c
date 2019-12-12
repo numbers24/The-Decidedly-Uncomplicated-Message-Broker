@@ -126,7 +126,7 @@ void delete(char* name, int newSock)//delete command
 void *threadFunc(void *socket) //holds all the commands for each thread
 {
 	int newSock = *((int *)socket);
-	printf("%d\n",newSock);
+	printf("%d Connected\n",newSock);
 	char command[1024];
 	int rval=read(newSock,command,1024);
 	char cmd[6];//cmd holds the command
@@ -146,7 +146,6 @@ void *threadFunc(void *socket) //holds all the commands for each thread
 			rval=recv(newSock,command,1024,0);//gets the command from the client
 			if(!strcmp(command,"GDBYE"))
 			{
-				printf("Client Left");
 				break;
 			}
 			strncpy(cmd,command,6);
@@ -313,7 +312,6 @@ void *threadFunc(void *socket) //holds all the commands for each thread
 		response="ER: CANNOT ENTER";
 		send(newSock,response,strlen(response),0);
 	}
-	pthread_mutex_unlock(&lock);
 	close(newSock);
 	printf("CLIENT DISCONNECTED\n");
 	pthread_exit(NULL);

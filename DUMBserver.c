@@ -124,7 +124,7 @@ void *threadFunc(void *socket)
 		response="HELLO DUMBv0 ready!";
 		struct box* curr;
 		send(newSock,response,strlen(response),0);
-		int q,i;
+		int i;
 		while(1)
 		{	
 			strncpy(cmd,command,6);
@@ -182,7 +182,7 @@ void *threadFunc(void *socket)
 				curr->used = 1;
 				response="OK!";
 				send(newSock,response,strlen(response),0);
-				q=i=0;
+				i=0;
 			}
 			else if(!strcmp(cmd,"NXTMG "))
 			{
@@ -192,21 +192,24 @@ void *threadFunc(void *socket)
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				if(q>1024)
+				if(i>1024)
 				{
 					response="ER:EMPTY";
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				printf("Message: %s, %d\n",curr->msg[q]);
-				response=curr->msg[q];
+				printf("Message: %s, %d\n",curr->msg[0]);
+				response=curr->msg[0];
 				if(response==NULL)
 				{
 					response="ER:EMPTY";
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				q++;
+				int q;
+				for(q=0;curr->msg[q]!=NULL;q++)
+				curr->msg[q]=curr->msg[q+1];
+				
 				send(newSock,response,strlen(response),0);
 			}
 			else if(!strcmp(cmd,"PUTMG "))
@@ -217,15 +220,26 @@ void *threadFunc(void *socket)
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				if(q>1024)
+				if(i>1024)
 				{
 					response="ER:LIMIT";
 					send(newSock,response,strlen(response),0);
 					break;
 				}	
 				response="OK!";
+				int size=0;
+				for(i=0;content[i]!=' ';i++,size*=10)
+				{
+					printf("%c\n",content[i]);
+					size+=content[i]-'0';
+				}
+				printf("%d, %d\n",size, i);
+				strncpy(content,content+i,size);
+				printf("%s\n",content);
+				for(i=0;curr->msg[i]!=NULL;i++)
+					printf("%s, %d\n",curr->msg[i],i);
+				
 				strncpy(curr->msg[i],content,1024);
-				i++;
 				send(newSock,response,strlen(response),0);
 					
 			}

@@ -9,7 +9,7 @@
 
 typedef struct box
 {
-	char* name;
+	char name[1024];
 	char msg[1024][1024];
 	int used;
 	struct box* next;
@@ -19,17 +19,23 @@ box* list;
 int sockets[256];
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-void add(struct box* new)
+void add(struct box* new,int newSock)
 {
-	if(!list)
+	if(list==NULL)
 	{
 		list=new;
 		return;
 	}	
 	struct box* ptr;
-	for(ptr=list;ptr;ptr=ptr->next)
+	for(ptr=list;ptr!=NULL;ptr=ptr->next)
 	{
-		if(ptr->next==NULL || list==NULL)
+		if(!strcmp(ptr->name,new->name))
+		{
+			char* response= "ER:EXIST";
+			send(newSock,response,strlen(response),0);
+			return;
+		}		
+		if(ptr->next==NULL)
 		{	
 			ptr->next = new;
 			return;
@@ -52,7 +58,6 @@ box* getBox(char* name)
 void create(char* name,int newSock)
 {
 	char* response;
-	send(newSock,response,strlen(response),0);
 	
 	if(name==NULL)
 	{
@@ -72,17 +77,14 @@ void create(char* name,int newSock)
 		send(newSock,response,strlen(response),0);
 		return;
 	}
-	else
-	{
 		struct box* new = (box*)malloc(sizeof(box));
-		new->name=name;
+		strncpy(new->name,name,1024);
 		new->msg;
 		new->next=NULL;
 		new->used = 0;
-		add(new);
+		add(new,newSock);
 		response="OK!";
 		send(newSock,response,strlen(response),0);
-	}
 }
 void delete(char* name, int newSock)
 {
@@ -99,7 +101,14 @@ void delete(char* name, int newSock)
 				send(newSock,response,strlen(response),0);
 				return;
 			}
+			if(ptr->msg[0][0]!='\0')
+			{
+				response="ER:NOT EMPTY";
+				send(newSock,response,strlen(response),0);
+				return;
+			}
 			prev->next=ptr->next;
+			free(ptr);
 			response="OK!";
 			send(newSock,response,strlen(response),0);
 			return;
@@ -113,6 +122,7 @@ void delete(char* name, int newSock)
 void *threadFunc(void *socket)
 {
 	int newSock = *((int *)socket);
+	printf("%d\n",newSock);
 	char command[1024];
 	int rval=read(newSock,command,1024);
 	char cmd[6];
@@ -124,17 +134,22 @@ void *threadFunc(void *socket)
 		response="HELLO DUMBv0 ready!";
 		struct box* curr;
 		send(newSock,response,strlen(response),0);
-		int i;
+		int i,open;
+		open=0;
 		while(1)
-		{	
+		{
+			printf("%s\n",cmd);
+			rval=recv(newSock,command,1024,0);
+			if(!strcmp(command,"GDBYE"))
+			{
+				printf("Client Left");
+				break;
+			}
 			strncpy(cmd,command,6);
 			strncpy(content,command+6,1024);
 			
-			if(!strcmp(command,"GDBYE"))
-			{
-				break;
-			}
-			else if(!strcmp(cmd,"CREAT "))
+			
+			if(!strcmp(cmd,"CREAT "))
 			{
 				pthread_mutex_lock(&lock);
 				create(content,newSock);
@@ -142,6 +157,12 @@ void *threadFunc(void *socket)
 			}
 			else if(!strcmp(cmd,"OPNBX "))
 			{
+				if(open==1)
+				{
+					response="ER:OPEND";
+					send(newSock,response,strlen(response),0);
+					continue;
+				}
 				if(content==NULL)
 				{
 					response="ER:WHAT?";
@@ -160,7 +181,7 @@ void *threadFunc(void *socket)
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				for(curr=list;curr;curr=curr->next)
+				for(curr=list;curr!=NULL;curr=curr->next)
 				{
 					if(!strcmp(curr->name,content))
 					{
@@ -183,6 +204,7 @@ void *threadFunc(void *socket)
 				response="OK!";
 				send(newSock,response,strlen(response),0);
 				i=0;
+				open=1;
 			}
 			else if(!strcmp(cmd,"NXTMG "))
 			{
@@ -198,7 +220,7 @@ void *threadFunc(void *socket)
 					send(newSock,response,strlen(response),0);
 					continue;
 				}
-				printf("Message: %s, %d\n",curr->msg[0]);
+				printf("Message: '%s'\n",curr->msg[0]);
 				response=curr->msg[0];
 				if(response==NULL)
 				{
@@ -207,24 +229,18 @@ void *threadFunc(void *socket)
 					continue;
 				}
 				int q,size;
-				for(size=0;curr->msg[0][size]!='\0';size++)
-				{
-					printf("%c\n",curr->msg[0][size]);
-				}
-				if(size)
-				size++;
+				char sz[1024];
+				size=strlen(response);
+				sprintf(sz, "OK!%d!",size);
 				printf("%d\n",size);
-				for(q=0;curr->msg[q]!=NULL;q++){
+				strcat(sz,response);
+				for(q=0;curr->msg[q][0]!='\0';q++){					
 					memset(curr->msg[q], 0, 1024);
 					strncpy(curr->msg[q], curr->msg[q+1], 1024);
-				}
-				
-				char sz[10];
-				sprintf(sz, "%!",size);
-				send(newSock,sz,strlen(sz),0);	 
-				send(newSock,response,strlen(response),0);
+				} 
+				send(newSock,sz,strlen(sz),0);
 			}
-			else if(!strcmp(cmd,"PUTMG "))
+			else if(!strcmp(cmd,"PUTMG!"))
 			{
 				if(!curr)
 				{
@@ -238,21 +254,23 @@ void *threadFunc(void *socket)
 					send(newSock,response,strlen(response),0);
 					break;
 				}	
-				response="OK!";
 				int size=0;
-				for(i=0;content[i]!=' ';i++,size*=10)
+				char sz[1024];
+				for(i=0;content[i]!='!';i++)
 				{
+					size*=10;
 					printf("%c\n",content[i]);
 					size+=content[i]-'0';
 				}
 				printf("%d, %d\n",size, i);
-				strncpy(content,content+i,size);
+				sprintf(sz,"OK!%d",size);
+				strncpy(content,content+(i+1),1024);
 				printf("%s\n",content);
-				for(i=0;curr->msg[i]!=NULL;i++)
+				for(i=0;curr->msg[i][0]!='\0';i++)
 					printf("%s, %d\n",curr->msg[i],i);
 				
 				strncpy(curr->msg[i],content,1024);
-				send(newSock,response,strlen(response),0);
+				send(newSock,sz,strlen(sz),0);
 					
 			}
 			else if(!strcmp(cmd,"DELBX "))
@@ -277,11 +295,11 @@ void *threadFunc(void *socket)
 				}
 				
 				response="OK!",curr->name;
-				send(newSock,response,strlen(response),0);
+				curr->used=0;
 				curr=NULL;
+				open=0;
+				send(newSock,response,strlen(response),0);
 			}
-			printf("%s\n",cmd);
-			rval=recv(newSock,command,1024,0);
 		}
 	}
 	else
